@@ -19,23 +19,28 @@ func BestMove(fen_string string) *chess.Move {
 	maxDepth := 99
 	maxRuntime := 10000.0 // ms
 
-	timer_start := float64(time.Now().UnixMilli())
+	timerStart := float64(time.Now().UnixMilli())
 
 	var bestMove *chess.Move
+	var currMove *chess.Move
 	var bestScore float64
+	var currScore float64
 	var depth int
 
 	for depth = 1; depth < maxDepth; depth++ {
-		bestMove, bestScore = miniMax(pos, depth, &counter)
+		currMove, currScore, err = miniMax(pos, depth, &counter, timerStart, maxRuntime)
 
-		if float64(time.Now().UnixMilli())-timer_start > maxRuntime {
+		if err != nil {
 			break
 		}
+
+		bestMove = currMove
+		bestScore = currScore
 	}
 
 	timer_end := float64(time.Now().UnixMilli())
 
-	timer_diff := timer_end - timer_start
+	timer_diff := timer_end - timerStart
 	timer_diff_sec := timer_diff / float64(time.Second.Milliseconds())
 
 	fmt.Println("summary")

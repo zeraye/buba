@@ -1,8 +1,10 @@
 package buba
 
 import (
+	"errors"
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/notnil/chess"
 )
@@ -11,7 +13,7 @@ var boolToInt = map[bool]int{
 	true: 1, false: -1,
 }
 
-func miniMax(pos *chess.Position, depth int, counter *int) (*chess.Move, float64) {
+func miniMax(pos *chess.Position, depth int, counter *int, timerStart float64, maxRuntime float64) (*chess.Move, float64, error) {
 	var bestScore float64
 
 	cache := make(map[[16]byte]float64)
@@ -24,7 +26,11 @@ func miniMax(pos *chess.Position, depth int, counter *int) (*chess.Move, float64
 
 	for _, move := range pos.ValidMoves() {
 		new_pos := pos.Update(move)
-		eval := miniMaxRecursive(new_pos, depth, !isMax, alpha, beta, counter, &cache)
+		eval, err := miniMaxRecursive(new_pos, depth, !isMax, alpha, beta, counter, &cache, timerStart, maxRuntime)
+
+		if err != nil {
+			return nil, 0.0, err
+		}
 
 		if (eval > bestScore && isMax) || (eval < bestScore && !isMax) {
 			bestMoves = []*chess.Move{move}
@@ -34,20 +40,24 @@ func miniMax(pos *chess.Position, depth int, counter *int) (*chess.Move, float64
 		}
 	}
 
-	return bestMoves[rand.Intn(len(bestMoves))], bestScore
+	return bestMoves[rand.Intn(len(bestMoves))], bestScore, nil
 }
 
-func miniMaxRecursive(pos *chess.Position, depth int, isMax bool, alpha float64, beta float64, counter *int, cache *map[[16]byte]float64) float64 {
+func miniMaxRecursive(pos *chess.Position, depth int, isMax bool, alpha float64, beta float64, counter *int, cache *map[[16]byte]float64, timerStart float64, maxRuntime float64) (float64, error) {
+	if float64(time.Now().UnixMilli())-timerStart > maxRuntime {
+		return 0.0, errors.New("runtime excedeed")
+	}
+
 	(*counter)++
 
 	if pos.Status() != chess.NoMethod || depth == 0 {
-		return eval(pos)
+		return eval(pos), nil
 	}
 
 	cached_eval, ok := (*cache)[pos.Hash()]
 
 	if ok {
-		return cached_eval
+		return cached_eval, nil
 	}
 
 	(*cache)[pos.Hash()] = eval(pos)
@@ -57,11 +67,17 @@ func miniMaxRecursive(pos *chess.Position, depth int, isMax bool, alpha float64,
 	for _, move := range pos.ValidMoves() {
 		new_pos := pos.Update(move)
 
+		eval, err := miniMaxRecursive(new_pos, depth-1, !isMax, alpha, beta, counter, cache, timerStart, maxRuntime)
+
+		if err != nil {
+			return 0.0, err
+		}
+
 		if isMax {
-			bestScore = math.Max(miniMaxRecursive(new_pos, depth-1, !isMax, alpha, beta, counter, cache), bestScore)
+			bestScore = math.Max(eval, bestScore)
 			alpha = math.Max(bestScore, alpha)
 		} else {
-			bestScore = math.Min(miniMaxRecursive(new_pos, depth-1, !isMax, alpha, beta, counter, cache), bestScore)
+			bestScore = math.Min(eval, bestScore)
 			beta = math.Min(bestScore, beta)
 		}
 
@@ -70,5 +86,5 @@ func miniMaxRecursive(pos *chess.Position, depth int, isMax bool, alpha float64,
 		}
 	}
 
-	return bestScore
+	return bestScore, nil
 }
