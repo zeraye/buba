@@ -38,18 +38,7 @@ func BestMove(fen_string string) *chess.Move {
 		bestScore = currScore
 	}
 
-	timer_end := float64(time.Now().UnixMilli())
-
-	timer_diff := timer_end - timerStart
-	timer_diff_sec := timer_diff / float64(time.Second.Milliseconds())
-
-	fmt.Println("summary")
-	fmt.Println("runtime[s]", timer_diff_sec)
-	fmt.Println("nodes     ", counter)
-	fmt.Println("k-nodes/s ", int(float64(counter)/timer_diff))
-	fmt.Println("evaluation", bestScore/100) // change evaluation scale from pawn=100 to pawn=1
-	fmt.Println("depth     ", depth)
-	fmt.Println("best_move ", bestMove.String())
+	fmt.Println("evaluation", bestScore)
 
 	return bestMove
 }
