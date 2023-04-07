@@ -1,35 +1,38 @@
 package buba
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/notnil/chess"
 )
 
-func BestMove(fen_string string) *chess.Move {
-	fen, err := chess.FEN(fen_string)
+type result struct {
+	move          *chess.Move
+	score         int
+	nodesAnalysed int
+	depth         int
+}
 
+func BestMove(fen_string string, maxRuntime time.Duration) result {
+	fen, err := chess.FEN(fen_string)
 	if err != nil {
 		panic("Invalid FEN string!")
 	}
 
-	counter := 0
-	pos := chess.NewGame(fen).Position()
-	maxDepth := 99
-	maxRuntime := 10000.0 // ms
-
-	timerStart := float64(time.Now().UnixMilli())
-
 	var bestMove *chess.Move
 	var currMove *chess.Move
-	var bestScore float64
-	var currScore float64
+	var bestScore int
+	var currScore int
 	var depth int
 
-	for depth = 1; depth < maxDepth; depth++ {
-		currMove, currScore, err = miniMax(pos, depth, &counter, timerStart, maxRuntime)
+	maxDepth := 99
+	nodesAnalysed := 0
+	pos := chess.NewGame(fen).Position()
+	timeEnd := time.Now().Add(maxRuntime)
+	cache := make(map[[16]byte]int)
 
+	for depth = 1; depth < maxDepth; depth++ {
+		currMove, currScore, err = miniMax(pos, depth, &nodesAnalysed, timeEnd, &cache)
 		if err != nil {
 			break
 		}
@@ -38,7 +41,5 @@ func BestMove(fen_string string) *chess.Move {
 		bestScore = currScore
 	}
 
-	fmt.Println("evaluation", bestScore)
-
-	return bestMove
+	return result{bestMove, bestScore, nodesAnalysed, depth}
 }

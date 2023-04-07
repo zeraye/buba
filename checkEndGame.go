@@ -6,13 +6,17 @@ import (
 	"github.com/notnil/chess"
 )
 
-func checkEndGame(pos *chess.Position) bool {
-	data, _ := pos.Board().MarshalBinary()
-	pieces_count := 0
-
-	for entry := range data {
-		pieces_count += bits.OnesCount(uint(entry))
+func checkEndGame(pos *chess.Position) (bool, error) {
+	data, err := pos.Board().MarshalBinary()
+	if err != nil {
+		return false, err
 	}
 
-	return pieces_count < 16
+	piecesCount := 0
+
+	for row := range data {
+		piecesCount += bits.OnesCount(uint(row))
+	}
+
+	return piecesCount < 12, nil
 }

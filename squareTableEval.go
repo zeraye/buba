@@ -2,7 +2,7 @@ package buba
 
 import "github.com/notnil/chess"
 
-var pawnSquareTable = []float64{
+var pawnSquareTable = []int{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	50, 50, 50, 50, 50, 50, 50, 50,
 	10, 10, 20, 30, 30, 20, 10, 10,
@@ -13,7 +13,7 @@ var pawnSquareTable = []float64{
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var knightSquareTable = []float64{
+var knightSquareTable = []int{
 	-50, -40, -30, -30, -30, -30, -40, -50,
 	-40, -20, 0, 0, 0, 0, -20, -40,
 	-30, 0, 10, 15, 15, 10, 0, -30,
@@ -24,7 +24,7 @@ var knightSquareTable = []float64{
 	-50, -40, -30, -30, -30, -30, -40, -50,
 }
 
-var bishopSquareTable = []float64{
+var bishopSquareTable = []int{
 	-20, -10, -10, -10, -10, -10, -10, -20,
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 0, 5, 10, 10, 5, 0, -10,
@@ -35,7 +35,7 @@ var bishopSquareTable = []float64{
 	-20, -10, -10, -10, -10, -10, -10, -20,
 }
 
-var rookSquareTable = []float64{
+var rookSquareTable = []int{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	5, 10, 10, 10, 10, 10, 10, 5,
 	-5, 0, 0, 0, 0, 0, 0, -5,
@@ -46,7 +46,7 @@ var rookSquareTable = []float64{
 	0, 0, 0, 5, 5, 0, 0, 0,
 }
 
-var queenSquareTable = []float64{
+var queenSquareTable = []int{
 	-20, -10, -10, -5, -5, -10, -10, -20,
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 0, 5, 5, 5, 5, 0, -10,
@@ -57,7 +57,7 @@ var queenSquareTable = []float64{
 	-20, -10, -10, -5, -5, -10, -10, -20,
 }
 
-var kingMiddleGameSquareTable = []float64{
+var kingMiddleGameSquareTable = []int{
 	-30, -40, -40, -50, -50, -40, -40, -30,
 	-30, -40, -40, -50, -50, -40, -40, -30,
 	-30, -40, -40, -50, -50, -40, -40, -30,
@@ -68,7 +68,7 @@ var kingMiddleGameSquareTable = []float64{
 	20, 30, 10, 0, 0, 10, 30, 20,
 }
 
-var kingEndGameSquareTable = []float64{
+var kingEndGameSquareTable = []int{
 	-50, -40, -30, -20, -20, -30, -40, -50,
 	-30, -20, -10, 0, 0, -10, -20, -30,
 	-30, -10, 20, 30, 30, 20, -10, -30,
@@ -79,30 +79,31 @@ var kingEndGameSquareTable = []float64{
 	-50, -30, -30, -30, -30, -30, -30, -50,
 }
 
-func squareTableEval(pt chess.PieceType, c chess.Color, s chess.Square, isEndGame bool) float64 {
-	color_inv := -1.0 // black
+var colorToInt = map[chess.Color]int{
+	chess.White: 1, chess.Black: -1,
+}
 
-	if c == chess.White {
-		s = 63 - s // reverse squareTable, 63 is MAX_SQUARE_TABLE_INDEX
-		color_inv = 1.0
+func squareTableEval(pt chess.PieceType, color chess.Color, square chess.Square, isEndGame bool) int {
+	if color == chess.White {
+		square = 63 - square // reverse squareTable, 63 is MAX_SQUARE_TABLE_INDEX
 	}
 
 	switch pt {
 	case chess.Pawn:
-		return pawnSquareTable[s] * color_inv
+		return pawnSquareTable[square] * colorToInt[color]
 	case chess.Knight:
-		return knightSquareTable[s] * color_inv
+		return knightSquareTable[square] * colorToInt[color]
 	case chess.Bishop:
-		return bishopSquareTable[s] * color_inv
+		return bishopSquareTable[square] * colorToInt[color]
 	case chess.Rook:
-		return rookSquareTable[s] * color_inv
+		return rookSquareTable[square] * colorToInt[color]
 	case chess.Queen:
-		return queenSquareTable[s] * color_inv
+		return queenSquareTable[square] * colorToInt[color]
 	case chess.King:
 		if isEndGame {
-			return kingEndGameSquareTable[s] * color_inv
+			return kingEndGameSquareTable[square] * colorToInt[color]
 		}
-		return kingMiddleGameSquareTable[s] * color_inv
+		return kingMiddleGameSquareTable[square] * colorToInt[color]
 	default:
 		return 0
 	}

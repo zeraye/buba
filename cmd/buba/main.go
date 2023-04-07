@@ -2,45 +2,35 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"math"
 
-	"github.com/notnil/chess"
-	"github.com/notnil/chess/uci"
 	"github.com/zeraye/buba"
 )
 
 func main() {
-	eng, err := uci.New("stockfish")
-	if err != nil {
-		panic(err)
+
+	cplSum := 0
+	cplCount := 0
+
+	for _, fen_string := range []string{
+		/*
+			"R7/B1bb4/3k4/8/1P2p1BK/8/pPp2pp1/Q3R3 w - - 0 1",
+			"5rk1/ppp3pp/2n1p2q/3p1r2/6B1/2P1P2n/PPQ3PB/R4RK1 w - - 0 21",
+			"3b4/5P2/1n3Bp1/1P5p/1p1r4/1P1kp1K1/1R4pP/8 w - - 0 1",
+			"1QNN4/B2k4/1Pb2p2/8/6P1/1r1p1pK1/B6p/R7 w - - 0 1",
+			"3R4/4P1K1/2R1Pr2/1p1p2p1/NppN3P/8/1p6/5k2 w - - 0 1",
+			"8/1r2nKp1/2P2P1P/2k1qN2/3p4/2p5/1pn4B/Q7 w - - 0 1",
+		*/
+		"3r1r1k/ppp3pp/1b6/6q1/5p2/PQP5/3B1PBP/3R1R1K b - - 0 1",
+	} {
+
+		cpl := buba.CalculateCentipawnLoss(fen_string)
+		cplSum += cpl
+		cplCount++
 	}
-	defer eng.Close()
-	// initialize uci with new game
-	if err := eng.Run(uci.CmdUCI, uci.CmdIsReady, uci.CmdUCINewGame); err != nil {
-		panic(err)
-	}
-	// have stockfish play speed chess against itself (10 msec per move)
-	fen_string := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-	//fen_string = "7R/N3P3/8/8/8/8/1k5K/8 b - - 36 84"
-	fen_string = "4rr2/2q1p2R/p3k1p1/2ppnb2/1p3Q2/3P1N2/PPP1BPP1/R3K3 b Q - 2 22"
-	fen_string = "5rk1/ppp3pp/2n1p2q/3p1r2/6B1/2P1P2n/PPQ3PB/R4RK1 w - - 0 21"
-	fen, err := chess.FEN(fen_string)
-	if err != nil {
-		panic(err)
-	}
-	game := chess.NewGame(fen)
-	cmdPos := uci.CmdPosition{Position: game.Position()}
-	cmdGo := uci.CmdGo{MoveTime: time.Second}
-	if err := eng.Run(cmdPos, cmdGo); err != nil {
-		panic(err)
-	}
-	var color int
-	if game.Position().Turn() == chess.White {
-		color = 1
-	} else {
-		color = -1
-	}
-	move := eng.SearchResults().Info.Score.CP * color
-	fmt.Println(move)
-	buba.BestMove(fen_string)
+
+	avgCpl := cplSum / cplCount
+	fmt.Printf("Average centipawn loss: %d\n", avgCpl)
+	elo := 3100 * math.Exp(-0.01*float64(avgCpl))
+	fmt.Printf("Elo: %d\n", int(elo))
 }

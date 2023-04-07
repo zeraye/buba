@@ -1,6 +1,9 @@
 package buba
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 type bestMoveTest struct {
 	fen      string
@@ -15,7 +18,7 @@ var bestMoveTests = []bestMoveTest{
 
 func TestBestMove(t *testing.T) {
 	for _, test := range bestMoveTests {
-		if bestMove := BestMove(test.fen).String(); bestMove != test.bestMove {
+		if bestMove := BestMove(test.fen, time.Second*5).move.String(); bestMove != test.bestMove {
 			t.Errorf("Bad move (%s) for position %s", bestMove, test.fen)
 		}
 	}
